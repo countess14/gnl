@@ -10,9 +10,15 @@ int		main(int __unused ac, char **av)
 
 	while ((ret = get_next_line(fd, &line)) > 0)
 	{
-		printf("%s\n", line);
+		ft_putstr(line);
+		ft_strdel(&line);
+		ft_putnbr(ret);
+		ft_putchar('\n');
 //		printf("%s\n", stockk);
 	}
+	while (1)
+		;
+	ft_putnbr(ret);
 	//ft_putnbr(ret);
 	return (0);
 }

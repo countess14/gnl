@@ -21,87 +21,81 @@ static int	rest(char **stockk, char **line)
 
 	if ((tmp = ft_strchr(*stockk, '\n')))
 	{
+		// ft_putstr("rest 1\n");
+		// ft_putstr(*stockk);
 		*tmp = 0;
 		ft_strdel(line);
 		*line = ft_strdup(*stockk);
-		ft_strdel(stockk);
+		cleaner = *stockk;
 		*stockk = ft_strdup(tmp + 1);
+		ft_strdel(&cleaner);
+		// ft_putstr(*stockk);
 		return (1);
 	}
-	else if (ft_strchr(*stockk, '\0'))
+	else
 	{
-		cleaner = *line;
+		// ft_putstr("rest 2\n");
+		// ft_putstr(*stockk);
 		*line = ft_strjoin(*stockk, *line);
-		free(cleaner);
 		ft_strdel(stockk);
-		return (1);
+		return (0);
 	}
 	return (0);
 }
 
-static int	search(char *buffer, char **line, char ** stockk   )
+static int	search(char *buffer, char **line, char ** stockk)
 {
 	char	*tmp;
 	char	*cleaner;
 
 	tmp = NULL;
+	// ft_putstr("search 1\n");
 	if ((tmp = ft_strchr(buffer, '\n')))
 	{
+		// ft_putstr("search 2\n");
 		*tmp = 0;
-		cleaner = *line;
-		*line = ft_strjoin(*stockk, *line);
-		free(cleaner);
-		ft_strdel(stockk);
 		*stockk = ft_strdup(tmp + 1);
 		cleaner = *line;
 		*line = ft_strjoin(*line, buffer);
 		free(cleaner);
-		free(buffer);
+		// ft_putstr(*stockk);
 		return (1);
 	}
-	return (0);
-}
-
-static int	join_end(char *stockk, int ret, char *buffer, char **line)
-{
-	char	*cleaner;
-
-	if (!stockk && *buffer && ret < BUFF_SIZE)
+	else
 	{
 		cleaner = *line;
 		*line = ft_strjoin(*line, buffer);
 		free(cleaner);
-		free(buffer);
-		return (1);
+		return (0);
 	}
-	return (0);
 }
 
 int			get_next_line(const int fd, char **line)
 {
 	static char			*stockk = NULL;
 	char				*buffer;
-	char				*cleaner;
 	int					ret;
+	int					count;
 
 	if (fd < 0 || fd > FD_MAX || BUFF_SIZE <= 0 || !line)
 		return (-1);
-	buffer = ft_strnew(8192);
 	*line = ft_strdup("");
-	while ((!stockk || *stockk == '\0' || !ft_strchr(stockk, '\n')) \
-			&& (ret = read(fd, buffer, BUFF_SIZE)) > 0)
+	count = 0;
+	if (stockk && stockk[0])
 	{
+	 	if (rest(&stockk, line))
+			return (1);
+		count++;
+	}
+	buffer = ft_strnew(BUFF_SIZE + 1);
+	while ((ret = read(fd, buffer, BUFF_SIZE)) > 0)
+	{
+		count++;
+		// ft_putstr("while 1\n");
 		buffer[ret] = 0;
 		if ((search(buffer, line, &stockk)))
-			return (1);
-		else if ((join_end(stockk, ret, buffer, line)))
-			return (1);
-		cleaner = *line;
-		*line = ft_strjoin(*line, buffer);
-		free(cleaner);
+			break;
 	}
-	if (stockk && stockk[0])
-		return (rest(&stockk, line));
 	free(buffer);
-	return (ret);
+	return (count + ret > 0 ? 1 : ret);
 }
